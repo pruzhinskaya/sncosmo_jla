@@ -1,0 +1,52 @@
+1) Transmissions of filters 
+
+This instrument is an alteration of REOSC_SCAN, to account for the
+f/4 beam: since light rays cross the filter at an angle, the bandpasses
+are blueshifted (because these are interference filters). 
+
+The code that computes these blueshifts is called blueshift_filter.cc
+in snfit. One needs refractive indexes which were deduced from Tom
+Benedict's measurements of the filters as a function of crossing
+angle (harcoded in the source code).
+
+2) Quantum Efficiency
+
+* QE_camera_mean_model.dat : 
+from CFHT web : http://www.cfht.hawaii.edu/Instruments/Imaging/MegaPrime/data.MegaPrime/MegaCam_QE_data.txt
+Those data correspond to the mean modelled QE from table 17 in the CCD test report of MegaCam done at CEA
+(see http://dphs10.saclay.cea.fr/Sap/Activites/Projets/Megacam/index.html)
+
+
+* QE_camera_high_res_model.dat : 
+New model with better sampling (10 nm) that goes down to 280 nm.
+It is also from CFHT web : http://www.cfht.hawaii.edu/Instruments/Imaging/MegaPrime/data.MegaPrime/E2V_CCD42-90_QEmodel.txt
+This is the one we used in Astier 2005 paper.
+
+3) Optics transmission and mirror reflection
+
+* CFHT_MegaPrime_Transmission.txt :
+Transmission model of the Wide-Field Corrector and the camera window
+is derived from combining all the transmission and diffusion effects
+of the various glass and coatings. 
+* CFHT_Primary_Transmission.txt
+Reflectivity model for the primary mirror is of a freshly coated,
+bare aluminum.
+
+CFHT_MegaPrime_Transmission.txt and CFHT_Primary_Transmission.txt were downloaded from
+http://www.cfht.hawaii.edu/Instruments/Imaging/MegaPrime/specsinformation.html
+in January 2006.
+
+* Optics_TR.dat and cfht.Al_coating.dat are older versions of these transmissions also retrieved from CFHT web site.
+Those are the ones that were used for the Astier 2006 paper.
+
+4) Atmospheric absorption 
+
+* vapor_maunakea.dat : typical vapor absorption lines at airmass 1 
+(used to improve the modeling of the effective z-band transmission in the Astier 2006 paper)
+
+* atmospheric_transmission_from_snifs.dat : atmospheric transmission as measured on SNIFS by the SNFactory
+	for an airmass of 1
+
+* atmospheric_transmission_from_snifs_with_tl.dat : atmospheric transmission as measured on SNIFS by the SNFactory including telluring absorption lines as measured above Kitt Peak (Hinkle 2003) obtained from ftp://ftp.noao.edu/catalogs/atmospheric_transmission/
+
+
