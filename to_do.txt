@@ -1,0 +1,31 @@
+Instruction:
+
+1. git checkout florian (you enter with your name)
+2. git pull origin master (you updated your version up to master version)
+3. you are doing your changes
+4. git add * (you add the changes)
+5. git commit -m 'put here your comments about changes you did'
+6. git push origin florian (your updated your branch)
+7. You go to the website and make pull request
+8. I accept your request and now they are in the master branch!
+
+---------------------------------------------------------------
+git clone
+git checkout -b newbranch
+
+CHANGES 
+
+git pull origin master
+
+or
+
+git checkout master
+git pull
+git checkout newbranch
+git merge master
+
+git push origin newbranch
+
+GO TO GIHUB AND PRESS
+pull request
+
