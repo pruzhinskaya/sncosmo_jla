@@ -146,7 +146,7 @@ class SUGARSource(sncosmo.Source):
     def _flux(self, phase, wave):
         m0 = self._model['M0'](phase, wave)
         m1 = self._model['M1'](phase, wave)
-	m2 = self._model['M2'](phase, wave)
+        m2 = self._model['M2'](phase, wave)
         m3 = self._model['M3'](phase, wave)
         m4 = self._model['M4'](phase, wave)
 	return (10. ** (-0.4 * (m0 + self._parameters[0] * m1 + self._parameters[1] * m2 + self._parameters[2] * m3 + self._parameters[3] * m4 + self._parameters[4] + 48.59)) / (wave ** 2 / 299792458. * 1.e-10))
