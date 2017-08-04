@@ -105,7 +105,7 @@ sncosmo.registry.register(sncosmo.CompositeMagSystem(bands=bands),'jla_AB_B12')
 
 # =============================================================================
 # Sources
-#TEST
+
 #test version to remove FLORIAN
 class SUGARSource(sncosmo.Source):
 
