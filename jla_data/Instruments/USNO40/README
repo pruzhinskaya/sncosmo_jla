@@ -1,0 +1,10 @@
+from :
+http://www-star.fnal.gov/ugriz/Filters/response.html
+
+wget http://www-star.fnal.gov/ugriz/Filters/usno_{u,g,r,i,z}.res
+
+# extract filters 1.3 airmass 
+for i in u g r i z
+do
+	awk '/^[^\\]/{print $1" "$4}' usno_$i.res > $i.dat
+done
