@@ -1,0 +1,22 @@
+#01/05/03
+#
+#Reflectance of a fresh aluminium coating on glass
+#
+#(the maximum loss when it's dirty should not exceed 5%)
+#
+#
+#(ang)   ref
+#
+3000   0.92
+3400   0.923
+3800   0.925
+4360   0.926
+4920   0.922
+5460   0.916
+6500   0.906
+7000   0.888
+8000   0.864
+9500   0.912
+10000  0.930
+# added by hand
+11000  0.930   

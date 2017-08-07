@@ -1,0 +1,25 @@
+# mirror size (cm^2) pi*( (360/2)^2 - (100/2)^2 )
+@MIRROR_AREA 80300. 
+
+# transmission of the optics
+@OPTICS_TRANS CFHT_MegaPrime_Transmission.dat
+
+# reflectivity of the mirror
+@MIRROR_REFLECTIVITY CFHT_Primary_Transmission.dat
+
+# atmospheric transmission
+@ATMOSPHERIC_TRANS atmospheric_transmission_from_snifs_with_tl.dat
+
+# filters
+@RADIALLY_VARIABLE_FILTERS FilterWheel
+
+# QE of CCD's
+@QE QE_camera_high_res_model.dat
+
+# pixel size
+@PIX_SIZE 0.187
+
+# PSF wavelength bias correction 
+@PSF_CORRECTION_FILTERS psf-corrections.dat
+
+
