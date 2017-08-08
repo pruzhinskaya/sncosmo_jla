@@ -13,6 +13,75 @@ t_max = 45
 t_min_sug = -12
 t_max_sug = 42
 
+def fit_salt2():
+	#outfile = open('res_salt2.txt', 'w')
+	#outfile.write('#name zcmb zhel dz mb dmb x1 dx1 color dcolor 3rdvar d3rdvar tmax dtmax cov_m_s cov_m_c cov_s_c set ra dec biascor')
+	list_SDSS = ['lc-sn1990af.list']
+	#list_SDSS = [raw_input('Name of SN: ')]		
+	#for filename in os.listdir('/home/maria/Dropbox/Science/Supernovae/JLA_SALT2/JLA_fit/jla_data'):
+	for filename in list_SDSS:
+		#if 'lc-SDSS' == filename[:7]:
+			sn_name = filename
+			print sn_name
+			head, data = read_lc_jla(sn_name, model = 'salt2')
+
+			source = sncosmo.get_source('salt2', version='2.4')
+			source.EBV_abs = head['@MWEBV']	
+			source.z_abs = head['@Z_HELIO']
+			source.Rv_abs = 3.1
+	
+			dust = sncosmo.CCM89Dust()
+			#model = sncosmo.Model(source=source)
+			model = sncosmo.Model(source=source,effects=[dust],effect_names=['mw'],effect_frames=['obs'])
+			model.set(mwebv=head['@MWEBV'])
+			model.set(z=head['@Z_HELIO'])
+	
+			#res, fitted_model = sncosmo.fit_lc(data, model, ['t0', 'x0', 'x1', 'c'], modelcov = True,bounds={'x1':(-10, 10),'c':(-5, 5)})
+
+			res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'x1', 'c'], modelcov = False, guess_t0=True)
+
+			t_peak = fitted_model.parameters[1]
+			#x0_guess = fitted_model.parameters[2]
+			#x1_guess = fitted_model.parameters[3]
+			#c_guess = fitted_model.parameters[4]
+			#print t_peak,fitted_model.parameters[4]
+
+			t1 = t_peak + t_min*(1 + model.get('z'))
+			t2 = t_peak + t_max*(1 + model.get('z'))
+
+			A=[]
+			for i in range(len(data)):                    
+				if data[i][0] <= t1 or data[i][0] >= t2:
+					A.append(i)
+			A=np.array(A)	
+			for i in range(len(A)):
+				#print  'We excluded the point %7.3f because it does not belong to the time interval [%7.2f,%7.2f]' % (data[A[i]][0],t1,t2)
+				data.remove_row(A[i])
+				A-=1
+
+			#model.set(t0=t_peak)
+			#er_t_peak = res.errors['t0']
+
+			res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'x1', 'c'], modelcov = True, guess_t0=True)
+			#res, fitted_model = sncosmo.fit_lc(data, model, ['t0', 'x0', 'x1', 'c'], modelcov = True, bounds={'t0':(t_peak-5, t_peak+5),'x0':(x0_guess-5, x0_guess+5),'x1':(x1_guess-5, x1_guess+5),'c':(c_guess-5, c_guess+5)})
+
+			#print fitted_model.get('t0')
+			#print fitted_model.maxtime(), fitted_model.mintime()
+			print res
+			sncosmo.plot_lc(data, model=fitted_model, errors=res.errors)
+			plt.savefig('SDSS9032_sugar.eps')
+			plt.show()
+	
+			#outfile.write('%s %s \n' %(sn_name,fitted_model.bandmag('standard::b','jla1',fitted_model.parameters[1]))) 
+			#outfile.write('%s \n' %(res)) 
+		
+
+			#outfile.write('\n')
+		
+			#outfile.write('%s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5],res.parameters[0],res.parameters[2],res.errors['x0'],res.parameters[3],res.errors['x1'],res.parameters[4],res.errors['c'],res.parameters[1],res.errors['t0'])) 
+			#outfile.write('%s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5],res.parameters[0],res.parameters[2],res.errors['x0'],res.parameters[3],res.errors['x1'],res.parameters[4],res.errors['c'],t_peak,er_t_peak))  
+	#outfile.close()
+
 def fit1():
 	#par_c = {}
 
@@ -145,77 +214,8 @@ def fit_sugar():
 		
 	#outfile.close()	
 
-def fit_salt2():
-	#outfile = open('res_salt2.txt', 'w')
-	#outfile.write('#name zcmb zhel dz mb dmb x1 dx1 color dcolor 3rdvar d3rdvar tmax dtmax cov_m_s cov_m_c cov_s_c set ra dec biascor')
-	list_SDSS = ['lc-sn1990af.list']
-	#list_SDSS = [raw_input('Name of SN: ')]		
-	#for filename in os.listdir('/home/maria/Dropbox/Science/Supernovae/JLA_SALT2/JLA_fit/jla_data'):
-	for filename in list_SDSS:
-		#if 'lc-SDSS' == filename[:7]:
-			sn_name = filename
-			print sn_name
-			head, data = read_lc_jla(sn_name)
-
-			source = sncosmo.get_source('salt2', version='2.4')
-			source.EBV_abs = head['@MWEBV']	
-			source.z_abs = head['@Z_HELIO']
-			source.Rv_abs = 3.1
-	
-			dust = sncosmo.CCM89Dust()
-			#model = sncosmo.Model(source=source)
-			model = sncosmo.Model(source=source,effects=[dust],effect_names=['mw'],effect_frames=['obs'])
-			model.set(mwebv=head['@MWEBV'])
-			model.set(z=head['@Z_HELIO'])
-	
-			#res, fitted_model = sncosmo.fit_lc(data, model, ['t0', 'x0', 'x1', 'c'], modelcov = True,bounds={'x1':(-10, 10),'c':(-5, 5)})
-
-			res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'x1', 'c'], modelcov = False, guess_t0=True)
-
-			t_peak = fitted_model.parameters[1]
-			#x0_guess = fitted_model.parameters[2]
-			#x1_guess = fitted_model.parameters[3]
-			#c_guess = fitted_model.parameters[4]
-			#print t_peak,fitted_model.parameters[4]
-
-			t1 = t_peak + t_min*(1 + model.get('z'))
-			t2 = t_peak + t_max*(1 + model.get('z'))
-
-			A=[]
-			for i in range(len(data)):                    
-				if data[i][0] <= t1 or data[i][0] >= t2:
-					A.append(i)
-			A=np.array(A)	
-			for i in range(len(A)):
-				#print  'We excluded the point %7.3f because it does not belong to the time interval [%7.2f,%7.2f]' % (data[A[i]][0],t1,t2)
-				data.remove_row(A[i])
-				A-=1
-
-			#model.set(t0=t_peak)
-			#er_t_peak = res.errors['t0']
-
-			res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'x1', 'c'], modelcov = True, guess_t0=True)
-			#res, fitted_model = sncosmo.fit_lc(data, model, ['t0', 'x0', 'x1', 'c'], modelcov = True, bounds={'t0':(t_peak-5, t_peak+5),'x0':(x0_guess-5, x0_guess+5),'x1':(x1_guess-5, x1_guess+5),'c':(c_guess-5, c_guess+5)})
-
-			#print fitted_model.get('t0')
-			#print fitted_model.maxtime(), fitted_model.mintime()
-			print res
-			sncosmo.plot_lc(data, model=fitted_model, errors=res.errors)
-			plt.savefig('SDSS9032_sugar.eps')
-			plt.show()
-	
-			#outfile.write('%s %s \n' %(sn_name,fitted_model.bandmag('standard::b','jla1',fitted_model.parameters[1]))) 
-			#outfile.write('%s \n' %(res)) 
-		
-
-			#outfile.write('\n')
-		
-			#outfile.write('%s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5],res.parameters[0],res.parameters[2],res.errors['x0'],res.parameters[3],res.errors['x1'],res.parameters[4],res.errors['c'],res.parameters[1],res.errors['t0'])) 
-			#outfile.write('%s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5],res.parameters[0],res.parameters[2],res.errors['x0'],res.parameters[3],res.errors['x1'],res.parameters[4],res.errors['c'],t_peak,er_t_peak))  
-	#outfile.close()
-######
 def chi2(name=None):
-	sn_name='lc-SDSS18604_text.list'
+	sn_name='lc-SDSS18604.list'
 	head, data = read_lc_jla(sn_name)
 
 	source = sncosmo.get_source('salt2', version='2.4')
@@ -225,11 +225,11 @@ def chi2(name=None):
 	dust = sncosmo.CCM89Dust()
 
 	model = sncosmo.Model(source=source,effects=[dust],effect_names=['mw'],effect_frames=['obs'])
-	model.set(mwebv=head['@MWEBV'], z=head(sn_name)['@Z_HELIO'], t0=54300, x0=7.0e-05,x1=-1,c=-0.04) #
+	model.set(mwebv=head['@MWEBV'], z=head['@Z_HELIO'], t0=54300, x0=7.0e-05,x1=-1,c=-0.04) #
 
 	print model.parameters
 	print sncosmo.chisq(data,model,modelcov=True)
-	print model.bandflux('SDSS::g', [54277.5, 54285.0, 54292.5, 54300., 54307.5, 54315., 54322.5], zp=25, zpsys='AB_jla')
+	print model.bandflux('jla_SDSS::g', [54277.5, 54285.0, 54292.5, 54300., 54307.5, 54315., 54322.5], zp=25, zpsys='jla_AB_B12')
 	#for i in range(13):
 	#	print model.bandflux(data[i][1], float(data[i][0]), zp=float(data[i][4]), zpsys='AB_jla')
 	sncosmo.plot_lc(data, model=model)

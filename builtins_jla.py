@@ -12,7 +12,11 @@ import sncosmo
 import astropy.units as u
 from sncosmo.models import _SOURCES
 
+<<<<<<< HEAD
 p = './jla_data/'
+=======
+p = 'jla_data/'
+>>>>>>> 996d5a3ab17a92764226e64939c379d4164fcda1
 # =============================================================================
 # Bandpasses
 
@@ -63,7 +67,11 @@ bands = [('jla_SDSS::u', 'SDSS/u.dat', jla_meta),
 	 ('jla_SWOPE2::i', 'Swope2/i_texas_WLcorr_atm.txt', jla_meta)]
 
 for name, fname, meta in bands:
+<<<<<<< HEAD
 	gen = (r for r in open(p+'Instruments/'+ fname) if not r[0] in ('@', '#'))
+=======
+	gen = (r for r in open(p + 'Instruments/' +  fname) if not r[0] in ('@', '#'))
+>>>>>>> 996d5a3ab17a92764226e64939c379d4164fcda1
 	data = np.genfromtxt(gen)
 	band = sncosmo.Bandpass(data[:,0],data[:,1],wave_unit=u.AA,name=name)    
 	sncosmo.registry.register(band)
@@ -90,7 +98,11 @@ for name, fn, desc in [('jla_VEGAHST', 'alpha_lyr_stis_005.ascii', VEGAHST_desc)
 		       ('jla_AB_B12_0', 'ab-spec.dat', AB_jla_desc),
                        ('jla_VEGA2', 'bd_17d4708_stisnic_003.ascii', VEGA2_desc)]:
     sncosmo.registry.register_loader(sncosmo.MagSystem, name, load_spectral_magsys_fits2,
+<<<<<<< HEAD
                              args=[p+'MagSys/'+ fn],
+=======
+                             args=[p + 'MagSys/' + fn],
+>>>>>>> 996d5a3ab17a92764226e64939c379d4164fcda1
                              meta={'subclass': subclass, 'url': website,
                                    'description': desc})
 
