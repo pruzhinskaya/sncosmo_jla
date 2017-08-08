@@ -103,8 +103,8 @@ def wl_cut_sugar(fname,z):
 		else:
 			return ('False',r)
 
-def read_lc_jla(sn_name):
-	infile = open('jla_data/jla_light_curves'+ sn_name, 'r') # download the sn data
+def read_lc_jla(sn_name, model = None):
+	infile = open('jla_data/jla_light_curves/'+ sn_name, 'r') # download the sn data
 	numbers = []
 	d = []
 	words = []
@@ -138,21 +138,32 @@ def read_lc_jla(sn_name):
 	dic = {}
 	for x in numbers:
 		if x[4] in dic.keys():
-			dic[x[4]].append(x[0])
+			#dic[x[4]].append(x[0])
+			dic[x[4]] += 1
 		else:
-			dic[x[4]] = [x[0]]
+			#dic[x[4]] = [x[0]]
+			dic[x[4]] = 1
 
 	f_in = {}	
 	f_out = {}
 	for i in dic.keys():
-		res = wl_cut_sugar(i,head['@Z_HELIO']) # sugar
-		#res = wl_cut_salt2(i,head['@MWEBV'],head['@Z_HELIO']) # salt2
-		if res[0] == 'True':
-			f_in[i] = res[1]
+		if model == 'salt2':
+			res = wl_cut_salt2(i,head['@MWEBV'],head['@Z_HELIO']) 
+			if res[0] == 'True':
+				f_in[i] = res[1]
+			else:
+				f_out[i] = res[1]
+				print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,dic[i],res[1],wl_min_sal,wl_max_sal)
+		elif model == 'sugar':
+			res = wl_cut_sugar(i,head['@Z_HELIO'])
+			if res[0] == 'True':
+				f_in[i] = res[1]
+			else:
+				f_out[i] = res[1]
+				print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % (i,dic[i],wl_min_sug,wl_max_sug)
 		else:
-			f_out[i] = res[1]
-			print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % (i,len(dic[i]),wl_min_sug,wl_max_sug) # sugar
-			#print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,len(dic[i]),res[1],wl_min_sal,wl_max_sal) # salt2
+			print 'ERROR: model name has to be salt2 or sugar'
+
 	time = []
 	band = []
 	flux = []
