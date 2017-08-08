@@ -10,11 +10,6 @@ import builtins_jla
 from astropy.table import Table
 #from ._extinction import ccm89
 
-
-#path to jla data
-p = './jla_data/'
-
-
 # wavelength limits for salt2 model
 wl_min_sal = 3000
 wl_max_sal = 7000
@@ -109,11 +104,7 @@ def wl_cut_sugar(fname,z):
 			return ('False',r)
 
 def read_lc_jla(sn_name):
-<<<<<<< HEAD
-	infile = open(p+'jla_light_curves/'+ sn_name, 'r') # download the sn data
-=======
 	infile = open('jla_data/jla_light_curves'+ sn_name, 'r') # download the sn data
->>>>>>> 812c849a1ded399866613d2a2cbd733e24aa1472
 	numbers = []
 	d = []
 	words = []
@@ -147,10 +138,10 @@ def read_lc_jla(sn_name):
 	dic = {}
 	for x in numbers:
 		if x[4] in dic.keys():
-			dic[x[4]]+=1
+			dic[x[4]].append(x[0])
 		else:
-			dic[x[4]] = 1
-      
+			dic[x[4]] = [x[0]]
+
 	f_in = {}	
 	f_out = {}
 	for i in dic.keys():
@@ -160,14 +151,8 @@ def read_lc_jla(sn_name):
 			f_in[i] = res[1]
 		else:
 			f_out[i] = res[1]
-<<<<<<< HEAD
-#			print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % ((i, dic[i],wl_min_sug,wl_max_sug) # sugar
-			print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i, dic[i],res[1],wl_min_sal,wl_max_sal) # salt
-                 
-=======
 			print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % (i,len(dic[i]),wl_min_sug,wl_max_sug) # sugar
 			#print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,len(dic[i]),res[1],wl_min_sal,wl_max_sal) # salt2
->>>>>>> 812c849a1ded399866613d2a2cbd733e24aa1472
 	time = []
 	band = []
 	flux = []
