@@ -108,17 +108,9 @@ def wl_cut_sugar(fname,z):
 		else:
 			return ('False',r)
 
-<<<<<<< HEAD
-def read_lc_jla(sn_name):
-<<<<<<< HEAD
-	infile = open(p+'jla_light_curves/'+ sn_name, 'r') # download the sn data
-=======
-	infile = open('jla_data/jla_light_curves'+ sn_name, 'r') # download the sn data
->>>>>>> 812c849a1ded399866613d2a2cbd733e24aa1472
-=======
+
 def read_lc_jla(sn_name, model = None):
 	infile = open('jla_data/jla_light_curves/'+ sn_name, 'r') # download the sn data
->>>>>>> 996d5a3ab17a92764226e64939c379d4164fcda1
 	numbers = []
 	d = []
 	words = []
@@ -152,17 +144,10 @@ def read_lc_jla(sn_name, model = None):
 	dic = {}
 	for x in numbers:
 		if x[4] in dic.keys():
-<<<<<<< HEAD
-			dic[x[4]]+=1
-		else:
-			dic[x[4]] = 1
-      
-=======
 			dic[x[4]] += 1
 		else:
 			dic[x[4]] = 1
 
->>>>>>> 996d5a3ab17a92764226e64939c379d4164fcda1
 	f_in = {}	
 	f_out = {}
 	for i in dic.keys():
@@ -181,20 +166,7 @@ def read_lc_jla(sn_name, model = None):
 				f_out[i] = res[1]
 				print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % (i,dic[i],wl_min_sug,wl_max_sug)
 		else:
-<<<<<<< HEAD
-			f_out[i] = res[1]
-<<<<<<< HEAD
-#			print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % ((i, dic[i],wl_min_sug,wl_max_sug) # sugar
-			print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i, dic[i],res[1],wl_min_sal,wl_max_sal) # salt
-                 
-=======
-			print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % (i,len(dic[i]),wl_min_sug,wl_max_sug) # sugar
-			#print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,len(dic[i]),res[1],wl_min_sal,wl_max_sal) # salt2
->>>>>>> 812c849a1ded399866613d2a2cbd733e24aa1472
-=======
 			print 'ERROR: model name has to be salt2 or sugar'
-
->>>>>>> 996d5a3ab17a92764226e64939c379d4164fcda1
 	time = []
 	band = []
 	flux = []
@@ -276,3 +248,16 @@ def comparison_hist(par='tmax',er_par = 'dtmax'):
 	ax2.set_ylabel('N')
 	plt.savefig('nb_tmax.png')	
 	plt.show()
+
+def new_Table():
+    """
+    creat an empty astropy Table
+    """
+    time=[]
+    band=[]
+    flux=[]
+    fluxerr=[]
+    zp=[]
+    zpsys=[]    
+    return Table([time,band,flux,fluxerr,zp,zpsys], names=('time','band','flux','fluxerr','zp','zpsys'),meta={'name':'data'})
+
