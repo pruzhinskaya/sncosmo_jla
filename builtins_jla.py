@@ -88,7 +88,7 @@ VEGA2_desc = 'BD17-jla1.dat'
 
 for name, fn, desc in [('jla_VEGAHST', 'alpha_lyr_stis_005.ascii', VEGAHST_desc),
 		       ('jla_AB_B12_0', 'ab-spec.dat', AB_jla_desc),
-                       ('jla_VEGA2', 'bd_17d4708_stisnic_003.ascii', VEGA2_desc)]:
+                       ('jla_VEGA2_0', 'bd_17d4708_stisnic_003.ascii', VEGA2_desc)]:
     sncosmo.registry.register_loader(sncosmo.MagSystem, name, load_spectral_magsys_fits2,
                              args=[p + 'MagSys/' + fn],
                              meta={'subclass': subclass, 'url': website,
@@ -96,14 +96,44 @@ for name, fn, desc in [('jla_VEGAHST', 'alpha_lyr_stis_005.ascii', VEGAHST_desc)
 
 # offsets are in the sense (mag_SDSS - mag_AB) = offset
 # -> for example: a source with AB mag = 0. will have SDSS mag = 0.06791
-bands = {'jla_SDSS::u': ('jla_AB_B12_0',  0.06791), 
+bands_ab = {'jla_SDSS::u': ('jla_AB_B12_0',  0.06791), 
          'jla_SDSS::g': ('jla_AB_B12_0', -0.02028),
          'jla_SDSS::r': ('jla_AB_B12_0', -0.00493),
          'jla_SDSS::i': ('jla_AB_B12_0', -0.01780),
          'jla_SDSS::z': ('jla_AB_B12_0', -0.01015)}
 
-sncosmo.registry.register(sncosmo.CompositeMagSystem(bands=bands),'jla_AB_B12')
+sncosmo.registry.register(sncosmo.CompositeMagSystem(bands=bands_ab),'jla_AB_B12')
 
+bands_BD17 ={'jla_STANDARD::U': ('jla_VEGA2_0', 9.724),
+	'jla_STANDARD::B': ('jla_VEGA2_0', 9.907),
+	'jla_STANDARD::V': ('jla_VEGA2_0', 9.464),
+	'jla_STANDARD::R': ('jla_VEGA2_0', 9.166),
+	'jla_STANDARD::I': ('jla_VEGA2_0', 8.846),
+	'jla_SDSS::u': ('jla_VEGA2_0', 10.56),
+	'jla_SDSS::g': ('jla_VEGA2_0', 9.64),
+	'jla_SDSS::r': ('jla_VEGA2_0', 9.35),
+	'jla_SDSS::i': ('jla_VEGA2_0', 9.25),
+	'jla_SDSS::z': ('jla_VEGA2_0', 9.23),
+	'jla_KEPLERCAM::Us': ('jla_VEGA2_0', 9.724), # U standard (normalement)
+	'jla_KEPLERCAM::B': ('jla_VEGA2_0', 9.8803),
+	'jla_KEPLERCAM::V': ('jla_VEGA2_0', 9.4722),
+	'jla_KEPLERCAM::r': ('jla_VEGA2_0', 9.3524), 
+	'jla_KEPLERCAM::i': ('jla_VEGA2_0', 9.2542),
+	'jla_4SHOOTER2::Us': ('jla_VEGA2_0', 9.724), # U standard (normalement)
+	'jla_4SHOOTER2::B': ('jla_VEGA2_0', 9.8744),
+	'jla_4SHOOTER2::V': ('jla_VEGA2_0', 9.4789),
+	'jla_4SHOOTER2::R': ('jla_VEGA2_0', 9.1554),
+	'jla_4SHOOTER2::I': ('jla_VEGA2_0', 8.8506),
+	'jla_SWOPE2::u': ('jla_VEGA2_0',   10.514),
+	'jla_SWOPE2::g': ('jla_VEGA2_0',   9.64406),
+	'jla_SWOPE2::r': ('jla_VEGA2_0',   9.3516),
+	'jla_SWOPE2::i': ('jla_VEGA2_0',   9.25),
+	'jla_SWOPE2::B': ('jla_VEGA2_0',   9.876433),
+	'jla_SWOPE2::V': ('jla_VEGA2_0',   9.476626),
+	'jla_SWOPE2::V1': ('jla_VEGA2_0',  9.471276),
+	'jla_SWOPE2::V2': ('jla_VEGA2_0',  9.477482)}
+
+sncosmo.registry.register(sncosmo.CompositeMagSystem(bands=bands_BD17),'jla_VEGA2')
 # =============================================================================
 # Sources
 

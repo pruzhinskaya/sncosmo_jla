@@ -3,7 +3,6 @@
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as Spline1d
 from matplotlib import pyplot as plt
-import matplotlib.gridspec as gridspec
 import re
 import sncosmo
 import builtins_jla
@@ -180,66 +179,3 @@ def read_lc_jla(sn_name, model = None):
 			continue
 	data=Table([time,band,flux,fluxerr,zp,zpsys], names=('time','band','flux','fluxerr','zp','zpsys'),meta={'name':'data'})
         return head, data	
-		
-def results(filename):
-	salt2_param = open('/home/maria/Dropbox/Science/Supernovae/'+filename, 'r')
-	lines = salt2_param.readlines()
-	salt2_param.close()
-	data = {}
-	first_line = lines[0]
-	properties = first_line.split()
-
-	for line in lines[1:]:
-	    words = line.split()
-	    i = words[0]
-	    values = words[1:]
-	    data[i] = {}
-	    for p, v in zip(properties[1:], values):
-	            data[i][p] = float(v)
-
-	return data
-
-def comparison_plot(par='tmax',er_par = 'dtmax'):
-	x = 0
-	for key in results('sncosmo/res_com'):
-		#dif = results('sncosmo/res_SDSS.txt')[key][par]-results('JLA_SALT2/jla_lcparams.txt')[key][par]
-		#if abs(dif) > 2.3:
-		#if results('sncosmo/res_com')[key][er_par] > 1:
-		#	print key
-		#plt.errorbar(results('sncosmo/res_SDSS.txt')[key][par],results('JLA_SALT2/jla_lcparams.txt')[key][par],xerr=results('sncosmo/res_SDSS.txt')[key][er_par],yerr=results('JLA_SALT2/jla_lcparams.txt')[key][er_par],marker = 'o',color='red')
-		plt.errorbar(x,results('sncosmo/res_com')[key][par]-results('JLA_SALT2/jla_lcparams.txt')[key][par],results('JLA_SALT2/jla_lcparams.txt')[key][er_par],marker = 'o',color='red')
-		#plt.plot(results('sncosmo/ALLSDSSres.txt')[key]['color'],results('JLA_SALT2/jla_lcparams.txt')[key]['color'],'ro')
-		#plt.plot(x,results('sncosmo/ALLSDSSres.txt')[key][par]-results('JLA_SALT2/jla_lcparams.txt')[key][par],'ro')
-		x = x + 1
-	#plt.plot(range(x),np.zeros(x),'k')
-	#plt.plot([53540,54650],[53540,54650],'k')
-	#plt.xlim([53540,54650])
-	#plt.ylim([53540,54650])
-	#plt.xlabel('sncosmo')
-	#plt.ylabel('snfit')
-	plt.ylabel('$t_{snfit}-t_{sncosmo}$',fontsize=25)
-	plt.xlabel('N')
-	plt.savefig('all_tmax_n.png')
-	plt.show()
-
-def comparison_hist(par='tmax',er_par = 'dtmax'):
-
-	gs = gridspec.GridSpec(2, 1) #subplots ratio
-	f, (ax1, ax2) = plt.subplots(2, sharex=True)
-
-	ax1 = plt.subplot(gs[0, 0])
-	ax2 = plt.subplot(gs[1, 0])
-
-	dif_par = []
-	dif_er_par = []	
-	for key in results('sncosmo/NBdata'):
-		dif_par.append(results('sncosmo/NBdata')[key][par]-results('JLA_SALT2/jla_lcparams.txt')[key][par])
-		dif_er_par.append(results('sncosmo/NBdata')[key][er_par]-results('JLA_SALT2/jla_lcparams.txt')[key][er_par])
-	ax1.hist(dif_par,25,label=par)
-	ax2.hist(dif_er_par,25,label=er_par)
-	ax1.legend()
-	ax2.legend()
-	ax1.set_ylabel('N')
-	ax2.set_ylabel('N')
-	plt.savefig('nb_tmax.png')	
-	plt.show()
