@@ -155,11 +155,6 @@ def read_lc_jla(sn_name, model = None):
 
     data = Table([time, band, flux, fluxerr, zp, zpsys], names=('time', 'band', 'flux', 'fluxerr', 'zp', 'zpsys'), meta={'name': 'data'})
 
-    if '@X_FOCAL_PLANE' in head.keys():
-        radius = np.sqrt(head['@X_FOCAL_PLANE']**2. + head['@Y_FOCAL_PLANE']**2.)
-    else:
-        radius = None
-
     cov = 'covmat_' + sn_name.rsplit('.')[0] + '.dat'
     if cov in os.listdir('jla_data/jla_light_curves/'):
         with open('jla_data/jla_light_curves/' + cov, 'r') as table:
@@ -174,6 +169,9 @@ def read_lc_jla(sn_name, model = None):
             dic[x[1]] += 1
         else:
             dic[x[1]] = 1
+
+    if '@X_FOCAL_PLANE' in head.keys():
+        radius = np.sqrt(head['@X_FOCAL_PLANE']**2. + head['@Y_FOCAL_PLANE']**2.)
 
     for fname in dic.keys():
         if fname.startswith('jla_MEGACAMPSF::'):

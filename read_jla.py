@@ -204,7 +204,7 @@ def read_lc_jla(sn_name, model = None):
                 f_in[i] = res[1]
             else:
                 f_out[i] = res[1]
-                print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,dic[i],res[1],wl_min_sal,wl_max_sal)
+                #print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,dic[i],res[1],wl_min_sal,wl_max_sal)
         elif model == 'sugar':
             res = wl_cut_sugar(i, head['@Z_HELIO'])
             if res[0] == 'True':

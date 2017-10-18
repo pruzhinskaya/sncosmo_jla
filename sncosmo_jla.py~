@@ -19,21 +19,21 @@ t_max_sug = 42
 
 def fit_salt2(results=False):
     dic = {}
+    bad_data = []
     jla_file = np.loadtxt('./jla_data/jla_lcparams.txt',dtype='str')
     for line in jla_file:
         dic['lc-' + line[0] + '.list'] = float(line[1]), float(line[20])
 
     outfile = open('res_salt2.txt', 'w')
     outfile.write('#name zcmb zhel dz mb dmb x1 dx1 color dcolor 3rdvar d3rdvar tmax dtmax cov_m_s cov_m_c cov_s_c set ra dec biascor')
-    list_jla = ['lc-SDSS16281.list', 'lc-04D4ic.list']
-    #list_jla = os.listdir('jla_data/jla_light_curves/')
+    #list_jla = ['lc-SDSS16281.list', 'lc-04D4ic.list']
+    list_jla = os.listdir('jla_data/jla_light_curves/')
     fitfail = []
     for filename in list_jla:
         if filename.startswith('lc-'):
             sn_name = filename
             print sn_name
             head, data = read_lc_jla(sn_name, model = 'salt2')
-
             source = sncosmo.get_source('salt2', version='2.4')
             source.EBV_snfit = head['@MWEBV']	
             source.z_snfit = head['@Z_HELIO']
@@ -46,7 +46,7 @@ def fit_salt2(results=False):
 
             try:     
                 # First iteration (x1 is fixed)
-                model.set(x1=0.0)
+                model.set(x1=0.01)
                 res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'c'], modelcov = False, guess_t0=True)
                 chi2 = res.chisq
                 chi2p = chi2+1
@@ -89,24 +89,31 @@ def fit_salt2(results=False):
                     sncosmo.plot_lc(data_new, model=fitted_model, errors=res.errors)
                     #plt.savefig('lc.eps')
                     plt.show()
+
+                if '@ZPERR_STANDARD::U' in head.keys() and head['@ZPERR_STANDARD::U'] == 0.1:
+                    bad_data.append(sn_name)
+                else:
+	
+                    # Calculation of m_b
+                    source2 = sncosmo.get_source('salt2', version='2.4')
+                    model2 = sncosmo.Model(source=source2)
+                    model2.set(t0=res.parameters[1], x0=res.parameters[2], x1=res.parameters[3], c=res.parameters[4])
+                    mb_without_corr = model2.bandmag('jla_STANDARD::B', 'jla_VEGA2_mb', [res.parameters[1]])
+                    zcmb = dic[sn_name][0]
+                    dbmag_pecvel = -5*np.log10((1+head['@Z_HELIO'])/(1+zcmb))
+                    biascor = dic[sn_name][1]
+
+                    mb = mb_without_corr + biascor + dbmag_pecvel
+
+                    outfile.write('\n %s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5], res.parameters[0], mb, dbmag_pecvel, res.parameters[3], res.errors['x1'], res.parameters[4], res.errors['c'], res.parameters[1], res.errors['t0']))
+ 
             except:
                 fitfail.append(sn_name)
                 print 'Error: fit fail for: ',sn_name
 
             print fitfail
-	
-            # Calculation of m_b
-            source2 = sncosmo.get_source('salt2', version='2.4')
-            model2 = sncosmo.Model(source=source2)
-            model2.set(t0=res.parameters[1], x0=res.parameters[2], x1=res.parameters[3], c=res.parameters[4])
-            mb_without_corr = model2.bandmag('jla_STANDARD::B', 'jla_VEGA2_mb', [res.parameters[1]])
-            zcmb = dic[sn_name][0]
-            dbmag_pecvel = -5*np.log10((1+head['@Z_HELIO'])/(1+zcmb))
-            biascor = dic[sn_name][1]
+            print bad_data
 
-            mb = mb_without_corr + biascor + dbmag_pecvel
-
-            outfile.write('\n %s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5], res.parameters[0], mb, dbmag_pecvel, res.parameters[3], res.errors['x1'], res.parameters[4], res.errors['c'], res.parameters[1], res.errors['t0'])) 
     outfile.close()
 
 def fit_sugar():
@@ -197,7 +204,7 @@ def results(filename):
             data[i][p] = float(v)
     return data
 
-def comparison_plot(par='x1', er_par='dx1'):
+def comparison_plot(par='mb', er_par='dmb'):
     # Plot Setup
     rcParams['font.size'] = 16.
     font = {'family': 'normal', 'size': 16}
@@ -214,9 +221,10 @@ def comparison_plot(par='x1', er_par='dx1'):
     x = 0
     for key in results('res_salt2.txt'):
         dif = results('res_salt2.txt')[key][par]-results('jla_data/jla_lcparams.txt')[key][par]
-        if abs(dif) > np.sqrt(results('res_salt2.txt')[key][er_par]**2. + results('jla_data/jla_lcparams.txt')[key][er_par]**2.):
-            print key
-        plt.errorbar(results('res_salt2.txt')[key][par],results('jla_data/jla_lcparams.txt')[key][par],xerr=results('res_salt2.txt')[key][er_par],yerr=results('jla_data/jla_lcparams.txt')[key][er_par],marker = 'o',color='red')
+        #if abs(dif) > 0.5*np.sqrt(results('res_salt2.txt')[key][er_par]**2. + results('jla_data/jla_lcparams.txt')[key][er_par]**2.):
+        #    print key
+        #plt.errorbar(results('res_salt2.txt')[key][par],results('jla_data/jla_lcparams.txt')[key][par],xerr=results('res_salt2.txt')[key][er_par],yerr=results('jla_data/jla_lcparams.txt')[key][er_par], color='red', fmt='o', mfc='red', zorder=1)
+        plt.errorbar(results('res_salt2.txt')[key][par],results('jla_data/jla_lcparams.txt')[key][par],xerr=None,yerr=results('jla_data/jla_lcparams.txt')[key][er_par], color='red', fmt='o', mfc='red', zorder=1)
 
         x = x + 1
     #plt.plot(range(x),np.zeros(x),'k')
@@ -224,59 +232,14 @@ def comparison_plot(par='x1', er_par='dx1'):
     ax = plt.subplot(111)
     ax.xaxis.set_minor_locator(AutoMinorLocator(2))
     ax.yaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.set_xlim([15,27])
+    ax.set_ylim([15,27])
     ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls = '--', color = 'black', alpha = 0.8) 
     plt.ylabel('snfit',fontsize=25)
     plt.xlabel('sncosmo',fontsize=25)
     plt.figtext(0.2, 0.8, par, fontsize=25)
-    #plt.savefig('plot.png')
-    plt.show()
-
-def comparison_plot_difference(par='x1', er_par='dx1'):
-    # Plot Setup
-    rcParams['font.size'] = 16.
-    font = {'family': 'normal', 'size': 16}
-    rc('axes', linewidth=1.5)
-    rc("text", usetex=True)
-    rc('font', family='serif')
-    rc('font', serif='Times')
-    rc('legend', fontsize=25)
-    rc('xtick.major', size=5, width=1.5)
-    rc('ytick.major', size=5, width=1.5)
-    rc('xtick.minor', size=3, width=1)
-    rc('ytick.minor', size=3, width=1)
-    fig = plt.figure(figsize=(8.,8.))
-    x = 0
-    for key in results('res_salt2.txt'):
-        dif = results('jla_data/jla_lcparams.txt')[key]['mb']+results('jla_data/jla_lcparams.txt')[key]['biascor']-results('res_salt2.txt')[key]['dmb']-results('res_salt2.txt')[key]['mb']
-        dif2 = results('jla_data/jla_lcparams2.txt')[key]['mB']-results('res_salt2.txt')[key]['mb']
-        #dif = results('jla_data/jla_lcparams.txt')[key]['mb']+results('jla_data/jla_lcparams.txt')[key]['biascor']-results('res_salt2.txt')[key]['dmb']-results('jla_data/jla_lcparams2.txt')[key]['mB']
-        #dif = results('res_salt2.txt')[key][par]-results('jla_data/jla_lcparams.txt')[key][par]-results('jla_data/jla_lcparams.txt')[key]['biascor']
-        #if abs(dif) > np.sqrt(results('res_salt2.txt')[key][er_par]**2. + results('jla_data/jla_lcparams.txt')[key][er_par]**2.):
-        #if abs(dif) > 1e-5:
-            #print key, results('jla_data/jla_lcparams.txt')[key]['mb'],results('jla_data/jla_lcparams.txt')[key]['biascor'],results('res_salt2.txt')[key]['dmb'],results('jla_data/jla_lcparams2.txt')[key]['mB']
-        plt.plot(x,dif,marker = 'o',color='red')
-        plt.plot(x,dif2,marker = '+',color='blue')
-
-        x = x + 1
-
-#   source = sncosmo.get_source('salt2', version='2.4')
-#   model = sncosmo.Model(source=source)
-#   for key in results('res_salt2.txt'):
-#       t0 = results('jla_data/jla_lcparams2.txt')[key]['tmax']
-#       x0 = results('jla_data/jla_lcparams2.txt')[key]['x0']
-#       x1 = results('jla_data/jla_lcparams2.txt')[key]['x1']
-#       c = results('jla_data/jla_lcparams2.txt')[key]['c']
-#       model.set(t0=t0,x0=x0,x1=x1,c=c)
-#       mb_sncosmo = model.bandmag('standard::b','jla1',[t0])
-#       plt.plot(x,mb_sncosmo-results('jla_data/jla_lcparams2.txt')[key]['mBc'],marker = 'o',color='red')
-#       x = x + 1
-
-    ax = plt.subplot(111)
-    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
-    ax.yaxis.set_minor_locator(AutoMinorLocator(2))
-    plt.ylabel('snfit-sncosmo',fontsize=25)
-    plt.xlabel('n',fontsize=25)
-
+    pdffile = 'mb_plot.pdf'
+    plt.savefig(pdffile, bbox_inches='tight')
     #plt.savefig('plot.png')
     plt.show()
 
