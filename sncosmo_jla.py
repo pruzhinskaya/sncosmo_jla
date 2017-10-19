@@ -24,10 +24,10 @@ def fit_salt2(results=False):
     for line in jla_file:
         dic['lc-' + line[0] + '.list'] = float(line[1]), float(line[20])
 
-    #outfile = open('res_salt2.txt', 'w')
-    #outfile.write('#name zcmb zhel dz mb dmb x1 dx1 color dcolor 3rdvar d3rdvar tmax dtmax cov_m_s cov_m_c cov_s_c set ra dec biascor')
-    list_jla = ['lc-SDSS14318.list']
-    #list_jla = os.listdir('jla_data/jla_light_curves/')
+    outfile = open('res_salt2.txt', 'w')
+    outfile.write('#name zcmb zhel dz mb dmb x1 dx1 color dcolor 3rdvar d3rdvar tmax dtmax cov_m_s cov_m_c cov_s_c set ra dec biascor')
+    #list_jla = ['lc-03D1co.list','lc-04D4jy.list','lc-05D3ax.list','lc-03D1dt.list','lc-04D3dd.list','lc-06D2cd.list','lc-03D3cd.list','lc-05D3ha.list']
+    list_jla = os.listdir('jla_data/jla_light_curves/')
     fitfail = []
     for filename in list_jla:
         if filename.startswith('lc-'):
@@ -71,11 +71,12 @@ def fit_salt2(results=False):
                             A.append(i)
                     A=np.array(A)
                     for i in range(len(A)):
-                        print  'We excluded the point %7.3f because it does not belong to the time interval [%7.2f,%7.2f]' % (data_new[A[i]][0],t1,t2)
+                        #print  'We excluded the point %7.3f because it does not belong to the time interval [%7.2f,%7.2f]' % (data_new[A[i]][0],t1,t2)
                         data_new.remove_row(A[i])
                         A-=1
 	
-                    res, fitted_model = sncosmo.fit_lc(data_new, model, ['t0', 'x0', 'x1', 'c'], modelcov = True, bounds={'t0': (t_peak-5, t_peak+5),'x0': (x0_guess-5, x0_guess+5),'x1': (x1_guess-5, x1_guess+5),'c': (c_guess-5, c_guess+5)})       
+                    #res, fitted_model = sncosmo.fit_lc(data_new, model, ['t0', 'x0', 'x1', 'c'], modelcov = True, bounds={'t0': (t_peak-5, t_peak+5),'x0': (x0_guess-5, x0_guess+5),'x1': (x1_guess-5, x1_guess+5),'c': (c_guess-5, c_guess+5)})
+                    res, fitted_model = sncosmo.fit_lc(data_new, model, ['t0', 'x0', 'x1', 'c'], modelcov = True)       
                     chi2p = chi2
                     chi2 = res.chisq
                     m += 1 
@@ -87,7 +88,7 @@ def fit_salt2(results=False):
                 if results == True:    
                     print res, '\nNumber of iterations: ',m
                     sncosmo.plot_lc(data_new, model=fitted_model, errors=res.errors)
-                    plt.savefig(sn_name[:9]+'.pdf')
+                    #plt.savefig(sn_name[:9]+'.pdf')
                     plt.show()
 
                 if '@ZPERR_STANDARD::U' in head.keys() and head['@ZPERR_STANDARD::U'] == 0.1:
@@ -105,7 +106,7 @@ def fit_salt2(results=False):
 
                     mb = mb_without_corr + biascor + dbmag_pecvel
 
-                    #outfile.write('\n %s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5], res.parameters[0], mb, dbmag_pecvel, res.parameters[3], res.errors['x1'], res.parameters[4], res.errors['c'], res.parameters[1], res.errors['t0']))
+                    outfile.write('\n %s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5], res.parameters[0], mb, dbmag_pecvel, res.parameters[3], res.errors['x1'], res.parameters[4], res.errors['c'], res.parameters[1], res.errors['t0']))
  
             except:
                 fitfail.append(sn_name)
@@ -114,7 +115,7 @@ def fit_salt2(results=False):
             print fitfail
             print bad_data
 
-    #outfile.close()
+    outfile.close()
 
 def fit_sugar():
     #outfile = open('res_sugar.txt', 'w')
@@ -205,7 +206,7 @@ def results(filename):
             data[i][p] = float(v)
     return data
 
-def comparison_plot(par='tmax', er_par='dtmax'):
+def comparison_plot(par='x1', er_par='dx1'):
     # Plot Setup
     rcParams['font.size'] = 16.
     font = {'family': 'normal', 'size': 16}
@@ -223,27 +224,26 @@ def comparison_plot(par='tmax', er_par='dtmax'):
     for key in results('res_salt2.txt'):
         dif = results('res_salt2.txt')[key][par]-results('jla_data/jla_lcparams.txt')[key][par]
         dif_er = results('res_salt2.txt')[key][er_par] - results('jla_data/jla_lcparams.txt')[key][er_par] 
-        if abs(dif) > np.sqrt(results('res_salt2.txt')[key][er_par]**2. + results('jla_data/jla_lcparams.txt')[key][er_par]**2.):
+        #if abs(dif) > np.sqrt(results('res_salt2.txt')[key][er_par]**2. + results('jla_data/jla_lcparams.txt')[key][er_par]**2.):
         #if abs(dif) > results('jla_data/jla_lcparams.txt')[key][er_par]:
-        #if 2.0 < dif_er < 3.0:
-            print key
+        #if -0.01 < dif_er < 0.01:
+            #print key
         plt.errorbar(results('res_salt2.txt')[key][par],results('jla_data/jla_lcparams.txt')[key][par],xerr=results('res_salt2.txt')[key][er_par],yerr=results('jla_data/jla_lcparams.txt')[key][er_par], color='red', fmt='o', mfc='red', zorder=1)
         #plt.errorbar(results('res_salt2.txt')[key][par],results('jla_data/jla_lcparams.txt')[key][par],xerr=None,yerr=results('jla_data/jla_lcparams.txt')[key][er_par], color='red', fmt='o', mfc='red', zorder=1)
 
         x = x + 1
-    #plt.plot(range(x),np.zeros(x),'k')
 
     ax = plt.subplot(111)
     ax.xaxis.set_minor_locator(AutoMinorLocator(2))
     ax.yaxis.set_minor_locator(AutoMinorLocator(2))
-    ax.set_xlim([-0.4,0.4])
-    ax.set_ylim([-0.4,0.4])
+    ax.set_xlim([-4,4])
+    ax.set_ylim([-4,4])
     ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls = '--', color = 'black', alpha = 0.8) 
     plt.ylabel('snfit',fontsize=25)
     plt.xlabel('sncosmo',fontsize=25)
     plt.figtext(0.2, 0.8, par, fontsize=25)
-    #pdffile = 'mb_plot.pdf'
-    #plt.savefig(pdffile, bbox_inches='tight')
+    pdffile = 'x1_plot.pdf'
+    plt.savefig(pdffile, bbox_inches='tight')
     #plt.savefig('plot.png')
     plt.show()
 
