@@ -106,9 +106,6 @@ def fit_salt2(results=False):
 
                 mb = mb_without_corr + biascor + dbmag_pecvel
 
-                # m_b uncertainty
-                dmbfit, cov_mb_c, cov_mb_x1, cov_mb_x0 = mb_uncertainty(res)
-
                 outfile.write('\n %s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5], res.parameters[0], mb, dbmag_pecvel, res.parameters[3], res.errors['x1'], res.parameters[4], res.errors['c'], res.parameters[1], res.errors['t0']))
  
             except:
