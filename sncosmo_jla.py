@@ -12,22 +12,12 @@ import numpy as np
 import copy
 #from decimal import Decimal
 
-
-
-
-
-
-
 t_min = -15
 t_max = 45
 
 t_min_sug = -12
 t_max_sug = 42
 
-# wavelength limits for salt2 model
-wl_min_sal = 3000
-wl_max_sal = 7000
-    
 def fit_salt2(results=False):
     jla_file = np.loadtxt('./jla_data/jla_lcparams.txt',dtype='str')
     jla_zcmb = np.array(jla_file[:,1],float)
@@ -66,7 +56,6 @@ def fit_salt2(results=False):
            
 #            
             try:
-            #note for me: remove shift if you put errors 
                 zperr_U = head['@ZPERR_STANDARD::U']
                 if zperr_U == 0.1:
                     apply_ZPERR = True
@@ -79,10 +68,10 @@ def fit_salt2(results=False):
 
             try:     
                 #initial iteration x1 fix
-                model.set(x1=0.0) #with 0.01 the  fit work for all SDSS and nearby   
+                model.set(x1=0.01) #with 0.01 the  fit work for all SDSS and nearby   
                     
                 print 'initialisation'
-                res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'c'], modelcov = False, guess_t0=True,apply_ZPERR=False)
+                res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'c'], modelcov = False, guess_t0=True, apply_ZPERR=False)
                 print 'first iteration'
                 chi2 = res.chisq
                 chi2p = chi2 +1
@@ -108,12 +97,7 @@ def fit_salt2(results=False):
                             #print  'We excluded the point %7.3f because it does not belong to the time interval [%7.2f,%7.2f]' % (data_new[A[i]][0],t1,t2)
                             data_new.remove_row(A[i])
                             A-=1    
-                        #model.set(t0=t_peak)
-                        #er_t_peak = res.errors['t0']
                         
-                        #res, fitted_model = sncosmo.fit_lc(data, model, ['t0','x0', 'x1', 'c'], modelcov = True, guess_t0=True)
-                                          
-#                        res, fitted_model = sncosmo.fit_lc(data_new, model, ['t0', 'x0', 'x1', 'c'], modelcov = True, bounds={'t0':(t_peak-5, t_peak+5),'x0':(x0_guess-5, x0_guess+5),'x1':(x1_guess-5, x1_guess+5),'c':(c_guess-5, c_guess+5)},apply_ZPERR=apply_ZPERR)       
                         res, fitted_model = sncosmo.fit_lc(data_new, model, ['t0', 'x0', 'x1', 'c'], modelcov = True, apply_ZPERR=apply_ZPERR) 
                         chi2p = chi2
     
@@ -125,14 +109,8 @@ def fit_salt2(results=False):
                 res = resp
                 fitted_model = fitted_modelp
                 print (res.chisq)
-    
-    
-                    
-                    #print fitted_model.get('t0')
-                    #print fitted_model.maxtime(), fitted_model.mintime()
-                    #print res
-    
-                plt.show()
+                
+                #Calculation of mb
                 mB_without_corr = mB_determination(res)
                 
                 for i in range (len(jla_sn_name)):
@@ -142,9 +120,11 @@ def fit_salt2(results=False):
                        zcmb = jla_zcmb[i]
                         
                 mb = mB_without_corr + biascor - 5*np.log10((1 + head['@Z_HELIO'])/(1 + zcmb))
-#                dmbfit, cov_mb_c, cov_mb_x1, cov_mb_x0 = mb_uncertainty(res)
-#                cor_dmb = ()
                 print mb
+                
+                #Calculation of mb uncertainty and covariance between mb and other parameters
+                dmbfit, cov_mb_c, cov_mb_x1, cov_mb_x0 = mb_uncertainty(res)
+                
                 
                 
                 if results == True:    
@@ -260,7 +240,6 @@ def chi2_maria(name=None):
 #    res, fitted_model = sncosmo.fit_lc(data, model, [], modelcov = True, bounds={'x0':(0.001,0.002)} ,apply_ZPERR=True)
 
     t_peak = model.parameters[1]
-    print model.parameters
     t1 = t_peak + t_min*(1 + model.get('z'))
     t2 = t_peak + t_max*(1 + model.get('z'))
                 
@@ -278,6 +257,7 @@ def chi2_maria(name=None):
 
     #for i in range(13):
     # print model.bandflux(data[i][1], float(data[i][0]), zp=float(data[i][4]), zpsys='AB_jla')
+    print model.parameters
     sncosmo.plot_lc(data_new, model=model)
     plt.savefig('lc-SDSS14318_snfit.pdf')
     plt.show()
@@ -360,32 +340,8 @@ def color_law_salt2(wl):
             if l[i]>= l_lo and l[i]<= l_hi:
                 cl.append(-(cst*l[i]+l[i]**2*a+l[i]**3*b+l[i]**4*c+l[i]**5*d)) 
         return np.array(cl)
-#        return -(cst*l+l**2*a+l**3*b+l**4*c+l**5*d)
-def Plot_diff_mb():
-    
-    mb_sncosmo = np.array(fit_salt2())
-    mb_snfittxt = np.loadtxt('/users/divers/lsst/mondon/hubblefit/sncosmo_jla/x0_mb_JLA.txt',dtype='str')
-    mb_snfit = np.array(mb_snfittxt[:,3],float)
-    dmb_snfit = np.array(mb_snfittxt[:,4],float)
-    plt.errorbar(mb_sncosmo, mb_snfit, xerr=np.nan, yerr=dmb_snfit, marker='o', color='red')
-    plt.xlabel('sncosmo')
-    plt.ylabel('snfit')
-    plt.show()    
-    
-def mb_using_snfit_parameters():
-    diff = []
-    z = []
-    for filename in os.listdir('./jla_data/jla_light_curves/'):
-#    for filename in list_SDSS:
-        if 'lc-SDSS' == filename[:7]:
-            sn_name = filename
-            res,mb_snfit1,dmb_snfit1,z1 = chi2(sn_name)
-            mb_snfit_code=mB_determination(res)
-            diff.append(mb_snfit_code-mb_snfit1)
-            z.append(z1)
-    plt.scatter(z,diff,marker = '.',color='red',label='mb')
 
-
+        
 def comparison_plot(par='x1', er_par='dx1'):
     # Plot Setup
 #    res_snfit = 'jla_data/jla_lcparams.txt'
@@ -446,54 +402,6 @@ def results(filename):
             data[i][p] = float(v)
     return data
     
-def comparison_plot_difference(par='x1', er_par='dx1'):
-    # Plot Setup
-    rcParams['font.size'] = 16.
-    font = {'family': 'normal', 'size': 16}
-    rc('axes', linewidth=1.5)
-    rc("text", usetex=True)
-    rc('font', family='serif')
-    rc('font', serif='Times')
-    rc('legend', fontsize=25)
-    rc('xtick.major', size=5, width=1.5)
-    rc('ytick.major', size=5, width=1.5)
-    rc('xtick.minor', size=3, width=1)
-    rc('ytick.minor', size=3, width=1)
-    fig = plt.figure(figsize=(8.,8.))
-    x = 0
-    for key in results('res_salt2.txt'):
-        dif = results('jla_data/jla_lcparams.txt')[key]['mb']+results('jla_data/jla_lcparams.txt')[key]['biascor']-results('res_salt2.txt')[key]['dmb']-results('res_salt2.txt')[key]['mb']
-        dif2 = results('jla_data/jla_lcparams2.txt')[key]['mB']-results('res_salt2.txt')[key]['mb']
-        #dif = results('jla_data/jla_lcparams.txt')[key]['mb']+results('jla_data/jla_lcparams.txt')[key]['biascor']-results('res_salt2.txt')[key]['dmb']-results('jla_data/jla_lcparams2.txt')[key]['mB']
-        #dif = results('res_salt2.txt')[key][par]-results('jla_data/jla_lcparams.txt')[key][par]-results('jla_data/jla_lcparams.txt')[key]['biascor']
-        #if abs(dif) > np.sqrt(results('res_salt2.txt')[key][er_par]**2. + results('jla_data/jla_lcparams.txt')[key][er_par]**2.):
-        #if abs(dif) > 1e-5:
-            #print key, results('jla_data/jla_lcparams.txt')[key]['mb'],results('jla_data/jla_lcparams.txt')[key]['biascor'],results('res_salt2.txt')[key]['dmb'],results('jla_data/jla_lcparams2.txt')[key]['mB']
-        plt.plot(x,dif,marker = 'o',color='red')
-        plt.plot(x,dif2,marker = '+',color='blue')
-
-        x = x + 1
-
-#   source = sncosmo.get_source('salt2', version='2.4')
-#   model = sncosmo.Model(source=source)
-#   for key in results('res_salt2.txt'):
-#       t0 = results('jla_data/jla_lcparams2.txt')[key]['tmax']
-#       x0 = results('jla_data/jla_lcparams2.txt')[key]['x0']
-#       x1 = results('jla_data/jla_lcparams2.txt')[key]['x1']
-#       c = results('jla_data/jla_lcparams2.txt')[key]['c']
-#       model.set(t0=t0,x0=x0,x1=x1,c=c)
-#       mb_sncosmo = model.bandmag('standard::b','jla1',[t0])
-#       plt.plot(x,mb_sncosmo-results('jla_data/jla_lcparams2.txt')[key]['mBc'],marker = 'o',color='red')
-#       x = x + 1
-
-    ax = plt.subplot(111)
-    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
-    ax.yaxis.set_minor_locator(AutoMinorLocator(2))
-    plt.ylabel('snfit-sncosmo',fontsize=25)
-    plt.xlabel('n',fontsize=25)
-
-    #plt.savefig('plot.png')
-    plt.show()
 
 def comparison_hist(par='tmax', er_par='dtmax'):
     # Plot Setup
@@ -572,21 +480,18 @@ def mb_uncertainty(res):
     vect = np.array([dmb_dx0, dmb_dx1, dmb_dc])
     
     #build the covariance matrix for salt2 parameters
-#    mat = np.delete(res.covariance, (0), axis=0)
-#    mat = mat.T
-#    mat = np.delete(mat, (0), axis=0)
-#    mat = mat.T
-    mat = res.covariance
+    mat = np.delete(res.covariance, (0), axis=0)
+    mat = mat.T
+    mat = np.delete(mat, (0), axis=0)
+    mat = mat.T
+#    mat = res.covariance
     print len(mat)
 #    print mat
     
     dmb = np.sqrt(np.dot(np.dot(vect.T, mat), vect))
     cov_mb_c = res.covariance[2,2] * dmb_dc + res.covariance[2,1] * dmb_dx1 + res.covariance[2,0] * dmb_dx0
     cov_mb_x1 = res.covariance[1,1] * dmb_dx1 + res.covariance[1,0] * dmb_dx0 + res.covariance[1,2] * dmb_dc
-    cov_mb_x0 = res.covariance[0,0] * dmb_dx0 +  res.covariance[0,1] * dmb_dx1 + res.covariance[0,2] * dmb_dc
-    
-    
-
+    cov_mb_x0 = res.covariance[0,0] * dmb_dx0 +  res.covariance[0,1] * dmb_dx1 + res.covariance[0,2] * dmb_dc       
     return dmb, cov_mb_c, cov_mb_x1, cov_mb_x0
     
     
