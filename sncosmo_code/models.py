@@ -820,7 +820,7 @@ class SALT2Source(Source):
         for b in set(band):
             mask1d = band == b
             mask2d = mask1d * mask1d[:, None]  # mask for result array
-            kcorrerr = self._colordisp(b.wave_eff_snfit(EBV=self.EBV_snfit,z=self.z_snfit,Rv=self.Rv_snfit))
+            kcorrerr = self._colordisp(b.wave_eff_snfit(EBV=self.EBV_snfit,z=self.z_snfit,Rv=self.Rv_snfit)) # masha
             result[mask2d] += kcorrerr**2
 
         return result
@@ -1374,8 +1374,19 @@ class Model(_ModelBase):
         if ndim == 0:
             return rcov[0, 0]
         return rcov
+        
+    # masha    
+    def build_ZPERR(self, band):
+        zero_point_uncertainty = np.zeros(len(band))          
+        for i in range (len(band)):        
+            if band[i].name == 'jla_STANDARD::U':
+                zero_point_uncertainty[i] = 0.1         
+            else:
+                zero_point_uncertainty[i] = 0.
+        return zero_point_uncertainty 
+    # masha
 
-    def bandfluxcov(self, band, time, zp=None, zpsys=None):
+    def bandfluxcov(self, band, time, zp=None, zpsys=None, apply_ZPERR=False): # masha
         """Like bandflux(), but also returns model covariance on values.
 
         Parameters
@@ -1403,12 +1414,27 @@ class Model(_ModelBase):
         f = self.bandflux(band, time, zp=zp, zpsys=zpsys)
         rcov = self._bandflux_rcov(band, time)
 
-        if isinstance(f, np.ndarray):
-            cov = f * rcov * f[:, np.newaxis]
+        # masha
+        if apply_ZPERR:             
+            zero_point_uncertainty = self.build_ZPERR(band)
+            zpcov = zero_point_uncertainty * zero_point_uncertainty[:, np.newaxis]
         else:
-            cov = f * rcov * f
-
+            zpcov = 0.
+                                                     
+        if isinstance(f, np.ndarray):
+            cov = f * (rcov + zpcov) * f[:, np.newaxis]
+        else:
+            cov = f * (rcov + zpcov) * f
+            print 'privet'
         return f, cov
+
+        #if isinstance(f, np.ndarray):
+            #cov = f * rcov * f[:, np.newaxis]
+        #else:
+            #cov = f * rcov * f
+
+        #return f, cov
+        # masha
 
     def bandmag(self, band, magsys, time):
         """Magnitude at the given time(s) through the given
