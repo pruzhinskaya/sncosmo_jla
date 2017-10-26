@@ -168,7 +168,7 @@ def mB_calc():
 #return mb
 
 def chi2(name=None):
-    sn_name='lc-SDSS14318.list'
+    sn_name='lc-sn1998dx.list'
     head, data = read_lc_jla(sn_name, model = 'salt2')
     source = sncosmo.get_source('salt2', version='2.4')
     source.EBV_snfit = head['@MWEBV']	
@@ -178,11 +178,11 @@ def chi2(name=None):
     dust = sncosmo.CCM89Dust()
 
     model = sncosmo.Model(source=source,effects=[dust],effect_names=['mw'],effect_frames=['obs'])
-    model.set(mwebv=head['@MWEBV'], z=head['@Z_HELIO'], t0=54072.0735686, x0=0.00138909129422,x1=0.864354391261,c=0.0283530988752) #
+    model.set(mwebv=head['@MWEBV'], z=head['@Z_HELIO'], t0=51071.926846, x0=0.00173409432721,x1=-1.5973806882,c=-0.118311996111) #
 
     print model.parameters
     print sncosmo.chisq(data,model,modelcov=True)
-    print model.bandflux('jla_SDSS::g', [54277.5, 54285.0, 54292.5, 54300., 54307.5, 54315., 54322.5], zp=25, zpsys='jla_AB_B12')
+    print model.bandflux('jla_STANDARD::U', [51072.12,51077.14,51078.14,51083.23,51136.1], zp=14.205682, zpsys='jla_VEGA2')
     #for i in range(13):
     #   print model.bandflux(data[i][1], float(data[i][0]), zp=float(data[i][4]), zpsys='AB_jla')
     sncosmo.plot_lc(data, model=model)
