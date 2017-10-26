@@ -17,16 +17,19 @@ t_max = 45
 t_min_sug = -12
 t_max_sug = 42
 
+wl_min_sal = 3000.
+wl_max_sal = 7000.
+
 def fit_salt2(results=False):
     dic = {}
     jla_file = np.loadtxt('./jla_data/jla_lcparams.txt',dtype='str')
     for line in jla_file:
         dic['lc-' + line[0] + '.list'] = float(line[1]), float(line[20])
 
-    outfile = open('res_salt2.txt', 'w')
+    outfile = open('res_salt22.txt', 'w')
     outfile.write('#name zcmb zhel dz mb dmb x1 dx1 color dcolor 3rdvar d3rdvar tmax dtmax cov_m_s cov_m_c cov_s_c set ra dec biascor')
-    #list_jla = ['lc-03D1co.list','lc-04D4jy.list','lc-05D3ax.list','lc-03D1dt.list','lc-04D3dd.list','lc-06D2cd.list','lc-03D3cd.list','lc-05D3ha.list']
-    list_jla = os.listdir('jla_data/jla_light_curves/')
+    list_jla = ['lc-03D1co.list','lc-04D4jy.list','lc-05D3ax.list','lc-03D1dt.list','lc-04D3dd.list','lc-06D2cd.list','lc-03D3cd.list','lc-05D3ha.list']
+    #list_jla = os.listdir('jla_data/jla_light_curves/')
     fitfail = []
     for filename in list_jla:
         if filename.startswith('lc-'):
@@ -108,6 +111,8 @@ def fit_salt2(results=False):
 
                 # m_b uncertainty
                 dmbfit, cov_mb_c, cov_mb_x1, cov_mb_x0 = mb_uncertainty(res)
+                print dmbfit, cov_mb_c, cov_mb_x1, cov_mb_x0
+
 
                 outfile.write('\n %s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5], res.parameters[0], mb, dbmag_pecvel, res.parameters[3], res.errors['x1'], res.parameters[4], res.errors['c'], res.parameters[1], res.errors['t0']))
  
@@ -170,7 +175,7 @@ def mB_calc():
 #return mb
 
 def chi2(name=None):
-    sn_name='lc-sn1998dx.list'
+    sn_name='lc-SDSS762.list'
     head, data = read_lc_jla(sn_name, model = 'salt2')
     source = sncosmo.get_source('salt2', version='2.4')
     source.EBV_snfit = head['@MWEBV']	
@@ -180,7 +185,7 @@ def chi2(name=None):
     dust = sncosmo.CCM89Dust()
 
     model = sncosmo.Model(source=source,effects=[dust],effect_names=['mw'],effect_frames=['obs'])
-    model.set(mwebv=head['@MWEBV'], z=head['@Z_HELIO'], t0=51071.926846, x0=0.00173409432721,x1=-1.5973806882,c=-0.118311996111) #
+    model.set(mwebv=head['@MWEBV'], z=head['@Z_HELIO'], t0=53625.149, x0=0.0001,x1=1.1259,c=-0.0388) #
 
     t_peak = model.parameters[1]
 
@@ -197,10 +202,9 @@ def chi2(name=None):
         #print  'We excluded the point %7.3f because it does not belong to the time interval [%7.2f,%7.2f]' % (data_new[A[i]][0],t1,t2)
         data_new.remove_row(A[i])
         A-=1 
-
-    print model.parameters
-    print sncosmo.chisq(data_new,model,modelcov=True)
-    print model.bandflux('jla_STANDARD::U', [51072.12,51077.14,51078.14,51083.23,51136.1], zp=14.205682, zpsys='jla_VEGA2')
+    data_new = sncosmo.fitting.photometric_data(data_new)
+    chi = sncosmo.fitting.generate_chisq(data_new, model, modelcov=False, apply_ZPERR=False) # to be careful with z what 'zperr_u = True' 
+    #print model.bandflux('jla_STANDARD::U', [51072.12,51077.14,51078.14,51083.23,51136.1], zp=14.205682, zpsys='jla_VEGA2')
     #for i in range(13):
     #   print model.bandflux(data[i][1], float(data[i][0]), zp=float(data[i][4]), zpsys='AB_jla')
     sncosmo.plot_lc(data_new, model=model)
@@ -245,7 +249,7 @@ def comparison_plot(par='x1', er_par='dx1'):
         #if abs(dif) > np.sqrt(results('res_salt2.txt')[key][er_par]**2. + results('jla_data/jla_lcparams.txt')[key][er_par]**2.):
         #if abs(dif) > results('jla_data/jla_lcparams.txt')[key][er_par]:
         #if -0.01 < dif_er < 0.01:
-            #print key
+        #    print key
         plt.errorbar(results('res_salt2.txt')[key][par],results('jla_data/jla_lcparams.txt')[key][par],xerr=results('res_salt2.txt')[key][er_par],yerr=results('jla_data/jla_lcparams.txt')[key][er_par], color='red', fmt='o', mfc='red', zorder=1)
         #plt.errorbar(results('res_salt2.txt')[key][par],results('jla_data/jla_lcparams.txt')[key][par],xerr=None,yerr=results('jla_data/jla_lcparams.txt')[key][er_par], color='red', fmt='o', mfc='red', zorder=1)
 
@@ -319,7 +323,7 @@ def mB_determination(res):
     scale_factor = 10**-12
     
     #interpolation of TB and Trest
-    filt2 = np.genfromtxt('./jla_data/Instruments/SNLS3-Landolt-model/sb-shifted.dat')
+    filt2 = np.genfromtxt('jla_data/Instruments/SNLS3-Landolt-model/sb-shifted.dat')
     wlen = filt2[:,0]
     tran = filt2[:,1]
     splB = Spline1d(wlen, tran, k=1,ext = 1)
@@ -327,15 +331,15 @@ def mB_determination(res):
 
 
     #interpolation of ref spectrum
-    data = np.genfromtxt('./jla_data/MagSys/bd_17d4708_stisnic_002.ascii')
+    data = np.genfromtxt('jla_data/MagSys/bd_17d4708_stisnic_002.ascii')
     dispersion = data[:,0]
     flux_density = data[:,1]
     splref = Spline1d(dispersion, flux_density, k=1,ext = 1)
 
   
     #interpolation of the spectrum model
-    template_0 = np.genfromtxt('./salt2-4/salt2_template_0.dat')    
-    template_1 = np.genfromtxt('./salt2-4/salt2_template_1.dat')
+    template_0 = np.genfromtxt('jla_data/salt2-4/salt2_template_0.dat')    
+    template_1 = np.genfromtxt('jla_data/salt2-4/salt2_template_1.dat')
 #    salt2source=sncosmo.SALT2Source('/users/divers/lsst/mondon/hubblefit/sncosmo_jla/salt2-4')
     
     wlM0 = []
