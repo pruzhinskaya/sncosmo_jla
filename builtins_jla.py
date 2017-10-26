@@ -63,7 +63,6 @@ bands = [('jla_SDSS::u', 'SDSS/u.dat', jla_meta),
 	 ('jla_SWOPE2::i', 'Swope2/i_texas_WLcorr_atm.txt', jla_meta)]
 
 for name, fname, meta in bands:
-
 	gen = (r for r in open(p + 'Instruments/' +  fname) if not r[0] in ('@', '#'))
 	data = np.genfromtxt(gen)
 	band = sncosmo.Bandpass(data[:,0],data[:,1],wave_unit=u.AA,name=name)    
@@ -88,10 +87,11 @@ AB_jla_desc = 'B12-AB-off.dat'
 VEGA2_desc = 'BD17-jla1.dat'
 VEGA2_mb_desc = 'BD17-snls3.dat'
 
+
 for name, fn, desc in [('jla_VEGAHST', 'alpha_lyr_stis_005.ascii', VEGAHST_desc),
 		       ('jla_AB_B12_0', 'ab-spec.dat', AB_jla_desc),
-                       ('jla_VEGA2_0', 'bd_17d4708_stisnic_003.ascii', VEGA2_desc), 
-                        ('jla_VEGA2_mb_0', 'bd_17d4708_stisnic_002.ascii', VEGA2_mb_desc)]:
+                       ('jla_VEGA2_0', 'bd_17d4708_stisnic_003.ascii', VEGA2_desc),
+		       ('jla_VEGA2_mb_0', 'bd_17d4708_stisnic_002.ascii', VEGA2_mb_desc)]:
     sncosmo.registry.register_loader(sncosmo.MagSystem, name, load_spectral_magsys_fits2,
                              args=[p + 'MagSys/' + fn],
                              meta={'subclass': subclass, 'url': website,
@@ -162,7 +162,6 @@ bands_BD17_mb ={'jla_STANDARD::U': ('jla_VEGA2_mb_0', 9.724),
 	'jla_4SHOOTER2::I': ('jla_VEGA2_mb_0', 8.8506)}
 
 sncosmo.registry.register(sncosmo.CompositeMagSystem(bands=bands_BD17_mb),'jla_VEGA2_mb')
-
 # =============================================================================
 # Sources
 
@@ -234,6 +233,4 @@ for topdir, ver, ref in [('SUGAR_model', '1.0', PF16ref)]:
     _SOURCES.register_loader('sugar', load_sugarmodel,
                              args=('/home/maria/Dropbox/Science/Supernovae/sncosmo/SUGAR/'+topdir,),
                              version=ver, meta=meta)
-
-
 
