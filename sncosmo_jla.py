@@ -142,7 +142,7 @@ def fit_salt2(results=False):
                        zcmb = jla_zcmb[i]
                         
                 mb = mB_without_corr + biascor - 5*np.log10((1 + head['@Z_HELIO'])/(1 + zcmb))
-                dmbfit, cov_mb_c, cov_mb_x1, cov_mb_x0 = mb_uncertainty(res)
+#                dmbfit, cov_mb_c, cov_mb_x1, cov_mb_x0 = mb_uncertainty(res)
 #                cor_dmb = ()
                 print mb
                 
