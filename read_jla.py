@@ -31,7 +31,7 @@ def bandpass_interpolators(name, radius, fig=False):
     minwave = float('inf')
     maxwave = 0.
 
-    bi = sncosmo.bandpasses._BANDPASS_INTERPOLATORS.retrieve(name)        
+    bi = sncosmo.bandpasses._BANDPASS_INTERPOLATORS.retrieve(name)
     r = radius
     band = bi.at(r)
 
@@ -45,7 +45,7 @@ def bandpass_interpolators(name, radius, fig=False):
         plt.show()
     return wave, trans
 
-# Extinction law (Cardelli, 1989 ApJ.345.245C) : 
+# Extinction law (Cardelli, 1989 ApJ.345.245C) :
 # delta_mag = A(lambda) = [a(x)Rv+b(x)]E(B-V)
 
 def wave_eff_A(wave, trans, Rv=3.1):
@@ -101,7 +101,7 @@ def wl_cut_salt2(fname, EBV, z):
     else:
         return('True', wlen_eff/(1+z))
 
-def wl_cut_sugar(fname, z):		
+def wl_cut_sugar(fname, z):
         filt = sncosmo.get_bandpass(fname)
         wlen = filt.wave
         tran = filt.trans
@@ -109,7 +109,7 @@ def wl_cut_sugar(fname, z):
         wlen_shift = wlen/(1+z)
         spl = Spline1d(wlen_shift, tran, k=1, ext = 1)
         xs = np.linspace(min(wlen_shift), max(wlen_shift), dt)
-        dxs = ((max(wlen_shift)-min(wlen_shift))/(dt-1)) 
+        dxs = ((max(wlen_shift)-min(wlen_shift))/(dt-1))
         area_full = np.sum(spl(xs)*dxs) # full area under the filter
 
         xs_cut = np.linspace(wl_min_sug, wl_max_sug, dt)
@@ -157,10 +157,15 @@ def read_lc_jla(sn_name, model = None):
 
     cov = 'covmat_' + sn_name.rsplit('.')[0] + '.dat'
     if cov in os.listdir('jla_data/jla_light_curves/'):
-        with open('jla_data/jla_light_curves/' + cov, 'r') as table:
-            size = table.readline()
-            cov_file = np.genfromtxt(table)
+        # with open('jla_data/jla_light_curves/' + cov, 'r') as table:
+        #     size = table.readline()
+        #     cov_file = np.genfromtxt(table)
 
+        infile = open('jla_data/jla_light_curves/' + cov, 'r')
+        size = infile.readline()
+        table = [line.encode('utf-8') for line in infile]
+        cov_file = np.genfromtxt(table)
+        
         data['fluxcov'] = cov_file
 
     dic = {}
@@ -175,7 +180,7 @@ def read_lc_jla(sn_name, model = None):
 
     for fname in dic.keys():
         if fname.startswith('jla_MEGACAMPSF::'):
-            name = fname[4:]        
+            name = fname[4:]
             filt = bandpass_interpolators(name,radius)
             wlen = filt[0]
             tran = filt[1]
@@ -195,25 +200,25 @@ def read_lc_jla(sn_name, model = None):
     sncosmo.registry.register(sncosmo.CompositeMagSystem(bands=bands_ab),'jla_AB_B12', force=True)
 
 
-    f_in = {}	
+    f_in = {}
     f_out = {}
     for i in dic.keys():
         if model == 'salt2':
-            res = wl_cut_salt2(i, head['@MWEBV'], head['@Z_HELIO']) 
+            res = wl_cut_salt2(i, head['@MWEBV'], head['@Z_HELIO'])
             if res[0] == 'True':
                 f_in[i] = res[1]
             else:
                 f_out[i] = res[1]
-                #print 'We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,dic[i],res[1],wl_min_sal,wl_max_sal)
+                #print('We excluded passband %s (%d points) because restframewavelength = %7.3f does not belong to the interval [%d,%d]' % (i,dic[i],res[1],wl_min_sal,wl_max_sal))
         elif model == 'sugar':
             res = wl_cut_sugar(i, head['@Z_HELIO'])
             if res[0] == 'True':
                 f_in[i] = res[1]
             else:
                 f_out[i] = res[1]
-                print 'We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % (i,dic[i],wl_min_sug,wl_max_sug)
+                print('We excluded passband %s (%d points) because it does not belong to the interval [%d,%d]' % (i,dic[i],wl_min_sug,wl_max_sug))
         else:
-            print 'ERROR: model name has to be salt2 or sugar'
+            print('ERROR: model name has to be salt2 or sugar')
 
     mask = []
     for row in data:

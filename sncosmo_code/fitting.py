@@ -276,7 +276,7 @@ def _phase_and_wave_mask(data, t0, z, phase_range, wave_range):
 def fit_lc(data, model, vparam_names, bounds=None, method='minuit',
            guess_amplitude=True, guess_t0=True, guess_z=True,
            minsnr=5.0, modelcov=False, verbose=False, maxcall=10000,
-           phase_range=None, wave_range=None, warn=True, apply_ZPERR=False):
+           phase_range=None, wave_range=None, warn=True, apply_ZPERR=False): # masha
     """Fit model parameters to data by minimizing chi^2.
 
     Ths function defines a chi^2 to minimize, makes initial guesses for
