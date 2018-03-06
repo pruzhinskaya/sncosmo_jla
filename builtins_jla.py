@@ -164,13 +164,37 @@ bands_BD17_mb ={'jla_STANDARD::U': ('jla_VEGA2_mb_0', 9.724),
 sncosmo.registry.register(sncosmo.CompositeMagSystem(bands=bands_BD17_mb),'jla_VEGA2_mb')
 # =============================================================================
 # Sources
+p2 = '/Users/Maria/Dropbox/Science/Supernovae/sncosmo/SUGAR/sugar_model/'
+
+from operator import itemgetter
+from sncosmo.salt2utils import BicubicInterpolator
+
+infile = open(p2 + 'SUGAR_model_v1.asci', 'r')
+lines = infile.readlines()
+infile.close()
+
+listik = []
+for line in lines:
+    new_line = [float(i) for i in line.split()]
+    listik.append(new_line)
+
+s = sorted(listik, key=itemgetter(0))
+
+names = ['0','1','2','3','4']
+for i in names:
+    outfile = open(p2 + 'sugar_template_' + i + '.dat', 'w')
+    for line in s:
+        j = 2+int(i)
+        outfile.write('%4.4f %8.8f %8.8f' %(line[0],line[1],line[j]))
+        outfile.write('\n')
+    outfile.close()
+
 
 class SUGARSource(sncosmo.Source):
 
     _param_names = ['q1', 'q2', 'q3', 'A', 'Mgr']
     param_names_latex = ['q_1', 'q_2', 'q_3', 'A', 'M_g']
     _SCALE_FACTOR = 1
-
 
     def __init__(self, modeldir=None,
                  m0file='sugar_template_0.dat',
@@ -188,16 +212,16 @@ class SUGARSource(sncosmo.Source):
 
         # model components are interpolated to 2nd order
         for key in ['M0', 'M1', 'M2', 'M3', 'M4']:
-            phase, wave, values = sncosmo.read_griddata_ascii('/Users/Maria/Dropbox/Science/Supernovae/sncosmo/SUGAR/SUGAR_model/'+names_or_objs[key])
+            phase, wave, values = sncosmo.read_griddata_ascii(p2 + names_or_objs[key])
             values *= self._SCALE_FACTOR
-            self._model[key] = Spline2d(phase, wave, values, kx=2, ky=2)
+            # self._model[key] = Spline2d(phase, wave, values, kx=2, ky=2)
+            self._model[key] = BicubicInterpolator(phase, wave, values)
 
             # The "native" phases and wavelengths of the model are those
             # of the first model component.
             if key == 'M0':
                 self._phase = phase
                 self._wave = wave
-
 
     def _flux(self, phase, wave):
         m0 = self._model['M0'](phase, wave)
@@ -206,12 +230,7 @@ class SUGARSource(sncosmo.Source):
         m3 = self._model['M3'](phase, wave)
         m4 = self._model['M4'](phase, wave)
         return (10. ** (-0.4 * (m0 + self._parameters[0] * m1 + self._parameters[1] * m2 + self._parameters[2] * m3 + self._parameters[3] * m4 + self._parameters[4] + 48.59)) / (wave ** 2 / 299792458. * 1.e-10))
-	#return (10. ** (-0.4 * (m0 + self._parameters[0] * m1  + 48.59)) / (wave ** 2 / 299792458. * 1.e-10))/ 10**self._parameters[4]
-	#return (10. ** (-0.4 * (m0 + self._parameters[0] * m1 + self._parameters[1] * m2 + self._parameters[2] * m3 + self._parameters[3] * m4 + self._parameters[4]))/f)
 
-        #Flux_nu=10**(-0.4*(self.Y_new_binning+ABmag0))
-        #f = self.SUGAR_Wavelength**2 / 299792458. * 1.e-10
-        #self.Flux=Flux_nu/f
 
 from sncosmo.builtins import DATADIR
 
@@ -223,7 +242,7 @@ def load_sugarmodel(relpath, name=None, version=None):
 website = 'http://no'
 PF16ref = ('PF16', 'PF et al. 2016 '
           '<http://arxiv.org/>')
-for topdir, ver, ref in [('SUGAR_model', '1.0', PF16ref)]:
+for topdir, ver, ref in [('sugar_model', '1.0', PF16ref)]:
     meta = {'type': 'SN Ia', 'subclass': '`~sncosmo.SUGARSource`',
             'url': website, 'reference': ref}
     _SOURCES.register_loader('sugar', load_sugarmodel,
