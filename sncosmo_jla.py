@@ -124,38 +124,92 @@ def fit_salt2(results=False):
 
     outfile.close()
 
-def fit_sugar():
-    #outfile = open('res_sugar.txt', 'w')
-    for filename in os.listdir('/Users/Maria/Dropbox/Science/Supernovae/JLA_SALT2/JLA_fit/jla_data'):
-    #list_SDSS = ['lc-SDSS18468.list']
-    #for filename in list_SDSS:
-        if 'lc-SDSS' == filename[:7]:
+def fit_sugar(results=False):
+    dic = {}
+    # outfile = open('res_sugar.txt', 'w')
+    # outfile.write('#name zcmb zhel dz mb dmb x1 dx1 color dcolor 3rdvar d3rdvar tmax dtmax cov_m_s cov_m_c cov_s_c set ra dec biascor')
+    # list_jla = ['lc-03D1co.list','lc-04D4jy.list','lc-05D3ax.list','lc-03D1dt.list','lc-04D3dd.list','lc-06D2cd.list','lc-03D3cd.list','lc-05D3ha.list']
+    list_jla = os.listdir('jla_data/jla_light_curves/')
+    fitfail = []
+    for filename in list_jla:
+        if filename.startswith('lc-SDSS'):
             sn_name = filename
             print(sn_name)
+            head, data = read_lc_jla(sn_name, model = 'salt2')
             source = sncosmo.get_source('sugar')
-            dust = sncosmo.CCM89Dust()
-            model = sncosmo.Model(source=source,effects=[dust],effect_names=['mw'],effect_frames=['obs'])
+            source.EBV_snfit = head['@MWEBV']
+            source.z_snfit = head['@Z_HELIO']
+            source.Rv_snfit = 3.1
 
-            head = read_lc_jla(sn_name)
+            dust = sncosmo.CCM89Dust()
+            model = sncosmo.Model(source=source, effects=[dust], effect_names=['mw'], effect_frames=['obs'])
             model.set(mwebv=head['@MWEBV'])
             model.set(z=head['@Z_HELIO'])
 
-            data = sncosmo.read_lc('/Users/Maria/Dropbox/Science/Supernovae/sncosmo/test_jla/' + sn_name)
+            try:
+                zperr_U = head['@ZPERR_STANDARD::U']
+                if zperr_U == 0.1:
+                    apply_ZPERR = True
+                else:
+                    apply_ZPERR = False
+            except:
+                apply_ZPERR = False
 
-            print(head['@DayMax'])
-            res, fitted_model = sncosmo.fit_lc(data, model, ['t0','q1','q2', 'q3', 'A', 'Mgr'], bounds={'t0':(head['@DayMax']-3,head['@DayMax']+3)},guess_t0=True,phase_range=(-12,42))
-            print(res)
-            sncosmo.plot_lc(data, model=fitted_model, errors=res.errors)
-            plt.show()
+            try:
+                # First iteration (x1 is fixed)
+                model.set(q1=1)
+                res, fitted_model = sncosmo.fit_lc(data, model, ['t0','q1','q2', 'q3', 'A', 'Mgr'],
+                                    bounds={'t0':(head['@DayMax']-5,head['@DayMax']+5)}, modelcov=False, guess_t0=True, apply_ZPERR=False)                
+                # res, fitted_model = sncosmo.fit_lc(data, model, ['t0','q1','q2', 'q3', 'A', 'Mgr'],
+                #                     bounds={'t0':(head['@DayMax']-5,head['@DayMax']+5)}, modelcov=False, guess_t0=True,phase_range=(-12,42), apply_ZPERR=False)
+                chi2 = res.chisq
+                chi2p = chi2+1
+                m = 0
+                while chi2 < chi2p:
+                    if m > 0:
+                        resp = res
+                        fitted_modelp = fitted_model
 
-            #outfile.write('%s \n' %(sn_name))
-            #outfile.write('%s \n' %(res))
-    #outfile.close()
-    #color = np.genfromtxt('/home/maria/Dropbox/Science/Supernovae/sncosmo/test_color.dat')
-    #color2 = np.genfromtxt('/home/maria/Dropbox/Science/Supernovae/sncosmo/test_color2.dat')
-    #c_salt = color[:,1]
-    #c_snc = color[:,2]
-    #plt.plot((c_snc-c_salt)/c_salt*100,c_salt,'+', (color2[:,2]-color2[:,1])/color2[:,1]*100,color2[:,1],'o')
+                    t_peak = fitted_model.parameters[1]
+
+                    t1 = t_peak + t_min*(1 + model.get('z'))
+                    t2 = t_peak + t_max*(1 + model.get('z'))
+
+                    A=[]
+                    data_new = copy.deepcopy(data)
+                    for i in range(len(data_new)):
+                        if data_new[i][0] <= t1 or data_new[i][0] >= t2:
+                            A.append(i)
+                    A=np.array(A)
+                    for i in range(len(A)):
+                        # print('We excluded the point %7.3f because it does not belong to the time interval [%7.2f,%7.2f]' % (data_new[A[i]][0],t1,t2))
+                        data_new.remove_row(A[i])
+                        A-=1
+
+                    res, fitted_model = sncosmo.fit_lc(data_new, model, ['t0', 'q1', 'q2', 'q3', 'A', 'Mgr'], modelcov=False, apply_ZPERR=False)
+                    chi2p = chi2
+                    chi2 = res.chisq
+                    m += 1
+
+                # Final results
+                res=resp
+                fitted_model=fitted_modelp
+
+                if results == True:
+                    print(res, '\nNumber of iterations: ',m)
+                    sncosmo.plot_lc(data_new, model=fitted_model, errors=res.errors)
+                    #plt.savefig(sn_name[:9]+'.pdf')
+                    plt.show()
+
+                # outfile.write('\n %s 999 %f 999 %f %f %f %f %f %f 999 999 %f %f 999 999 999 999 999 999 999' %(sn_name[3:-5], res.parameters[0], mb, dbmag_pecvel, res.parameters[3], res.errors['x1'], res.parameters[4], res.errors['c'], res.parameters[1], res.errors['t0']))
+
+            except:
+                fitfail.append(sn_name)
+                print('Error: fit fail for: ',sn_name)
+
+            print(fitfail)
+
+    # outfile.close()
 
 def mB_calc():
     #interpolation of TB and Trest
